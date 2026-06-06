@@ -1,0 +1,13 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.env
+*.env
+!examples/.env.example
+.ruff_cache
+.mypy_cache
+.pytest_cache
+uv.lock
+deploy

@@ -86,7 +86,11 @@ ZotWatch 自己的凭据(`ZOTERO_API_KEY`、embedding / LLM 的 key 等)则从 Z
 整体只需要 Python + 一条 iLink 连接,所以一台小 VPS(1–2 GB 内存)就够了。VPS 上
 需要 ZotWatch 的 `data/` 产物和各项 API key。
 
-`deploy/` 目录里提供了一个引导脚本和一份 systemd 单元文件:
+**最省事的方式是用 Docker**(免装环境、免 systemd):见
+[`deploy/docker.md`](deploy/docker.md) —— 装好 Docker 后,以后就是几条
+`docker compose` 命令。
+
+如果你更习惯直接在 VPS 上裸跑,`deploy/` 里也提供了引导脚本和 systemd 单元文件:
 
 ```bash
 cd zotwatch-mcp
