@@ -9,10 +9,12 @@ dependencies = [
     # The bot is a thin wrapper over the zotwatch package: it reuses zotwatch's
     # pipeline, storage, embedding and LLM clients directly (no reimplementation).
     "zotwatch @ git+https://github.com/CrazyHalfDay/AIZotWatch.git",
+    # Official QQ bot SDK (AppID + AppSecret, WebSocket gateway).
+    "qq-botpy>=1.2",
     "requests>=2.31",
     "python-dotenv>=1.0",
     "numpy>=1.24",
-    # Optional, only used to render the login QR code in the terminal.
+    # Optional, only used by the legacy WeChat/iLink transport (ilink.py).
     "qrcode>=7.4",
 ]
 

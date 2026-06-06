@@ -1,22 +1,20 @@
-# ZotWatch WeChat bot — docker compose.
+# ZotWatch QQ 机器人 — docker compose。
 #
-# The bot reuses an existing ZotWatch project on the host (its config/, .env and
-# data/). Edit the volume path below to point at YOUR AIZotWatch directory.
+# 机器人复用宿主机上一套已有的 ZotWatch 项目(它的 config/、.env 和 data/）。
+# 把下面 volumes 的左边改成你自己的 AIZotWatch 路径即可。
 
 services:
   zotwatch-bot:
     build: .
     image: zotwatch-bot
     restart: always
+    # QQ_BOT_APPID / QQ_BOT_SECRET(以及可选 QQ_BOT_ALLOWED_USERS)放在
+    # 本目录的 .env 里;.env 已被 gitignore,不会误提交。
+    env_file:
+      - .env
     environment:
-      # Where the ZotWatch project is mounted INSIDE the container (leave as-is).
+      # ZotWatch 项目在容器内的挂载点(保持 /zotwatch)。
       ZOTWATCH_DIR: /zotwatch
-      # Persist the iLink login token alongside the data on the host so it
-      # survives restarts (no second volume needed).
-      ILINK_TOKEN_FILE: /zotwatch/data/ilink_token.json
-      # Optional: comma-separated WeChat-id whitelist.
-      # ILINK_ALLOWED_USERS: ""
     volumes:
-      # LEFT side = path to YOUR AIZotWatch dir on the VPS. Edit it.
-      # RIGHT side must stay /zotwatch.
+      # 左边 = 你 VPS 上 AIZotWatch 目录的绝对路径;右边保持 /zotwatch。
       - /root/AIZotWatch:/zotwatch

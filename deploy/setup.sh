@@ -32,6 +32,8 @@ uv sync
 if [[ ! -f .env ]]; then
   cp examples/.env.example .env
   warn "Created .env from the example. Edit it now and set at least:"
+  echo "    QQ_BOT_APPID=...        # from https://q.qq.com"
+  echo "    QQ_BOT_SECRET=..."
   echo "    ZOTWATCH_DIR=/absolute/path/to/AIZotWatch"
 else
   say ".env already exists, leaving it untouched."
@@ -54,10 +56,10 @@ Next, on the ZotWatch project pointed to by ZOTWATCH_DIR:
 
 EOF
 
-# --- 4. First login ----------------------------------------------------------
-say "Run the bot once on this terminal to scan the login QR:"
+# --- 4. Run ------------------------------------------------------------------
+say "Make sure .env has QQ_BOT_APPID / QQ_BOT_SECRET, then start the bot:"
 echo "    uv run zotwatch-bot"
-echo "  (the token is cached to ~/.zotwatch_bot/ilink_token.json afterwards)"
+echo "  (QQ uses AppID+Secret — no QR scan. @mention it in a group or DM it.)"
 
 # --- 5. Optional systemd install --------------------------------------------
 read -r -p $'\nInstall the systemd service now? [y/N] ' ans

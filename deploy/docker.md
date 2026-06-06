@@ -1,31 +1,34 @@
-# 用 Docker 部署(免 apt / 免 systemd)
+# 用 Docker 部署 QQ 机器人(免 apt / 免 systemd)
 
-适合「不想在 VPS 上折腾环境」的人。装好 Docker 之后,全程只有几条 `docker` 命令。
-仍在你**现有的那台 VPS** 上跑,不换平台。
+装好 Docker 后,全程只有几条 `docker` 命令,在你**现有的那台 VPS** 上跑。
 
-> 注意:跨境风控问题不变 —— 长轮询还是从这台 VPS 出站连微信。海外机连不上的话,
-> 换国内机器是唯一解,和用不用 Docker 无关。
+> QQ 机器人用 AppID + AppSecret 连官方网关,**不用扫码**。但官方网关也是腾讯的:
+> 你的 VPS 出站连 `api.sgroup.qq.com`(WebSocket),海外机能不能连仍需实测
+> ——通常比逆向微信宽松。
 
 ---
 
-## 0. 装 Docker(一次性)
+## 0. 在 QQ 开放平台注册机器人(一次性,在网页上做)
+
+1. 打开 https://q.qq.com,登录,创建一个 **QQ 机器人**(不是「频道机器人」)。
+2. 在「开发设置」里拿到 **AppID** 和 **AppSecret**(记下来,下面要填)。
+3. 开通**群消息**和**C2C 私聊消息**相关能力;开发阶段把你自己的 QQ / 测试群加进
+   「沙箱 / 测试名单」,这样机器人没正式上线也能测。
+4. 等你想让别人也能用时,再走「发布上线」审核。
+
+> 平台菜单偶尔会改,以页面向导为准:核心就是拿到 AppID/AppSecret + 允许群和私聊消息。
+
+## 1. 装 Docker(一次性)
 
 ```bash
 curl -fsSL https://get.docker.com | sh
-docker version    # 能打印版本就 OK
+docker version
 ```
 
-## 1. 准备 ZotWatch 本体(配置 + key)
+## 2. 准备 ZotWatch 本体(配置 + key)
 
 ```bash
-cd ~
-git clone https://github.com/CrazyHalfDay/AIZotWatch.git
-```
-
-在 `~/AIZotWatch/.env` 填入你的 key(右边换成自己的;种类要和
-`~/AIZotWatch/config/config.yaml` 里的 `embedding.provider` / `llm.provider` 对上):
-
-```bash
+git clone https://github.com/CrazyHalfDay/AIZotWatch.git ~/AIZotWatch
 cat > ~/AIZotWatch/.env <<'EOF'
 ZOTERO_API_KEY=你的_zotero_key
 ZOTERO_USER_ID=你的_zotero_user_id
@@ -35,73 +38,59 @@ EOF
 ```
 
 (建议)编辑 `~/AIZotWatch/config/config.yaml`,把 `sources.scraper.enabled` 改成
-`false`,省得容器去拉浏览器。
+`false`,省得容器拉浏览器。
 
-## 2. 拿机器人 + 指好挂载路径
+## 3. 拿机器人 + 填 QQ 凭据 + 指好挂载路径
 
 ```bash
-cd ~
-git clone https://github.com/CrazyHalfDay/zotwatch-mcp.git
+git clone https://github.com/CrazyHalfDay/zotwatch-mcp.git ~/zotwatch-mcp
 cd ~/zotwatch-mcp
+
+cat > .env <<'EOF'
+QQ_BOT_APPID=你的_appid
+QQ_BOT_SECRET=你的_appsecret
+EOF
 ```
 
-打开 `docker-compose.yml`,把这一行左边改成你的 AIZotWatch **绝对路径**
-(`echo ~/AIZotWatch` 看到的就是):
+打开 `docker-compose.yml`,把这一行左边改成你的 AIZotWatch **绝对路径**:
 
 ```yaml
     volumes:
       - /root/AIZotWatch:/zotwatch     # ← 左边换成你的路径,右边保持 /zotwatch
 ```
 
-## 3. 构建镜像(一次性,慢一点)
+## 4. 构建镜像 + 建数据(一次性)
 
 ```bash
-cd ~/zotwatch-mcp
 docker compose build
-```
-
-## 4. 建数据(一次性)
-
-```bash
 docker compose run --rm zotwatch-bot zotwatch --base-dir /zotwatch profile --full
 docker compose run --rm zotwatch-bot zotwatch --base-dir /zotwatch watch
 ```
 
-这两条会照你的 Zotero 库算好向量、生成「今天」能读的推荐,落到
-`~/AIZotWatch/data/`。跑完不报错,就说明 key 都对、数据通了。
+跑完不报错,就说明 key 都对、数据通了(`~/AIZotWatch/data/` 里会有
+`profile.sqlite` `faiss.index` `archive.sqlite` 等)。
 
-## 5. 扫码登录(一次性)
-
-```bash
-docker compose run --rm zotwatch-bot
-```
-
-终端会打出二维码,用要当机器人的微信扫、手机确认。看到 `iLink login confirmed`
-就成功,按 `Ctrl-C` 退出。token 会存到 `~/AIZotWatch/data/ilink_token.json`,
-之后重启不再需要扫。
-
-## 6. 设成常驻后台
+## 5. 设成常驻后台
 
 ```bash
 docker compose up -d
+docker compose logs -f      # 看日志,出现 "QQ bot starting" 和连接成功即 OK
 ```
 
-完事。在微信里发 `帮助` / `今天` / `搜 soil moisture` 验证。
+完事。现在去测:
+
+- **群里**:把机器人拉进群,**@机器人 今天** / **@机器人 搜 soil moisture**。
+- **私聊**:直接私聊机器人发 `今天`、`搜 ...`、`帮助`。
+  (私聊需要在开放平台开通 C2C 能力;开发期用沙箱/测试名单。)
 
 ---
 
 ## 日常运维
 
 ```bash
-docker compose logs -f                 # 看实时日志(Ctrl-C 退出不影响运行)
-docker compose ps                      # 看是否在跑
-docker compose restart                 # 改了配置后重启
-docker compose down                    # 停掉
-git pull && docker compose up -d --build   # 更新代码后重建并重启
-```
-
-更新数据(等同手动跑一次抓取,一般直接在微信发「抓取」即可):
-
-```bash
-docker compose run --rm zotwatch-bot zotwatch --base-dir /zotwatch watch
+docker compose logs -f                       # 实时日志
+docker compose ps                            # 是否在跑
+docker compose restart                       # 改配置后重启
+docker compose down                          # 停掉
+git pull && docker compose up -d --build     # 更新代码后重建重启
 ```

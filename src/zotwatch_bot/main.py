@@ -1,30 +1,22 @@
-"""Entry point: poll iLink -> route -> reply.
+"""Entry point: start the QQ bot.
 
-A single long-poll loop. Fast commands reply synchronously; slow ones (``抓取``)
-reply with an acknowledgement immediately and push the result from a worker
-thread so polling never stalls.
+The QQ official-bot SDK (botpy) owns the event loop, websocket connection and
+reconnection. We just wire its message handlers to the ZotWatch router (see
+:mod:`zotwatch_bot.qqbot`) and call ``run``.
 """
 
 from __future__ import annotations
 
 import logging
-import time
-from concurrent.futures import ThreadPoolExecutor
 
-import requests
 from dotenv import load_dotenv
 
+from . import qqbot
 from .actions import Actions
 from .config import BotConfig
-from .ilink import ILinkAuthError, ILinkClient, InboundMessage
-from .router import Reply, Router
+from .router import Router
 
 logger = logging.getLogger(__name__)
-
-# After this many consecutive failed polls, shout — on an overseas VPS a
-# persistent failure most likely means WeChat risk control is rejecting the
-# cross-border connection (see README).
-_NOISY_FAILURE_THRESHOLD = 5
 
 
 def _setup_logging() -> None:
@@ -34,98 +26,32 @@ def _setup_logging() -> None:
     )
 
 
-def _run_followup(
-    client: ILinkClient, msg: InboundMessage, reply: Reply
-) -> None:
-    """Run a deferred action and push its result as a second message."""
-    try:
-        text = reply.followup()  # type: ignore[misc]
-    except Exception as exc:  # noqa: BLE001 - report failure back to the user
-        logger.exception("Follow-up task failed")
-        text = f"任务失败：{exc}"
-    try:
-        client.send_text(msg.from_user_id, msg.context_token, text)
-    except Exception:  # noqa: BLE001 - nothing more we can do
-        logger.exception("Failed to send follow-up result")
-
-
 def serve(config: BotConfig | None = None) -> None:
-    """Run the bot loop until interrupted."""
+    """Build the bot and run it until interrupted."""
     config = config or BotConfig.from_env()
 
-    # Load API keys etc. from the ZotWatch project's .env before building
-    # settings (env-var expansion reads os.environ at load time).
+    if not config.appid or not config.secret:
+        raise SystemExit(
+            "缺少 QQ 机器人凭据:请设置 QQ_BOT_APPID 和 QQ_BOT_SECRET"
+            "(在 q.qq.com 开放平台创建机器人后获取)。"
+        )
+
+    # Load ZotWatch credentials (Zotero / embedding / LLM keys) from the project's
+    # .env before building settings — env-var expansion reads os.environ.
     load_dotenv(config.base_dir / ".env")
 
-    logger.info("ZotWatch bot starting (project: %s)", config.base_dir)
+    logger.info("ZotWatch QQ bot starting (project: %s)", config.base_dir)
     actions = Actions(config.base_dir)
     router = Router(actions, list_limit=config.list_limit)
-    client = ILinkClient(config.token_file)
-    client.ensure_login()
 
-    executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="zotwatch-bot")
-    backoff = 1.0
-    consecutive_failures = 0
-
-    try:
-        while True:
-            try:
-                messages = client.poll()
-                backoff = 1.0  # reset after a successful poll
-                consecutive_failures = 0
-            except ILinkAuthError as exc:
-                # Token expired/rejected mid-run: re-authenticate and resume.
-                logger.warning("Auth error (%s); re-logging in", exc)
-                try:
-                    client.relogin()
-                except Exception:  # noqa: BLE001 - keep the loop alive
-                    logger.exception("Re-login failed; retrying in %.0fs", backoff)
-                    time.sleep(backoff)
-                    backoff = min(backoff * 2, 60)
-                continue
-            except (requests.RequestException, ValueError) as exc:
-                consecutive_failures += 1
-                if consecutive_failures >= _NOISY_FAILURE_THRESHOLD:
-                    logger.error(
-                        "Poll has failed %d times in a row (%s). If this VPS is "
-                        "outside China, WeChat risk control may be rejecting the "
-                        "connection to ilinkai.weixin.qq.com — see README.",
-                        consecutive_failures,
-                        exc,
-                    )
-                else:
-                    logger.warning("Poll failed (%s); retrying in %.0fs", exc, backoff)
-                time.sleep(backoff)
-                backoff = min(backoff * 2, 60)
-                continue
-
-            for msg in messages:
-                if not config.is_allowed(msg.from_user_id):
-                    logger.info("Ignoring message from non-allowed user %s", msg.from_user_id)
-                    continue
-
-                logger.info("Message from %s: %s", msg.from_user_id, msg.text)
-                reply = router.handle(msg.from_user_id, msg.text)
-
-                try:
-                    client.send_text(msg.from_user_id, msg.context_token, reply.text)
-                except Exception:  # noqa: BLE001 - log and keep serving
-                    logger.exception("Failed to send reply")
-                    continue
-
-                if reply.followup is not None:
-                    executor.submit(_run_followup, client, msg, reply)
-    except KeyboardInterrupt:
-        logger.info("Shutting down (keyboard interrupt)")
-    finally:
-        executor.shutdown(wait=False, cancel_futures=True)
+    qqbot.run(config, router)
 
 
 def main() -> None:
     """Console-script entry point."""
     _setup_logging()
-    # Load the bot's own .env (ZOTWATCH_DIR, ILINK_* …) from the working dir
-    # before reading any of those variables.
+    # Load the bot's own .env (QQ_BOT_APPID/SECRET, ZOTWATCH_DIR …) from the
+    # working dir before reading those variables.
     load_dotenv()
     serve()
 

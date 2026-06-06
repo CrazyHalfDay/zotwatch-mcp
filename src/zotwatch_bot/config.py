@@ -29,13 +29,24 @@ def _default_base_dir() -> Path:
 
 @dataclass
 class BotConfig:
-    """Runtime configuration for the WeChat bot."""
+    """Runtime configuration for the QQ bot."""
 
     # ZotWatch project root (holds config/config.yaml and data/).
     base_dir: Path = field(default_factory=_default_base_dir)
 
-    # Where to persist the iLink bot token between restarts so we only scan the
-    # QR code once. Defaults to ~/.zotwatch_bot/ilink_token.json.
+    # QQ 开放平台 (q.qq.com) bot credentials.
+    appid: str = ""
+    secret: str = ""
+
+    # Optional whitelist of QQ user openids allowed to use the bot. Empty means
+    # everyone. Comma-separated env var. NOTE: QQ openids are per-bot opaque ids
+    # and differ between group (member_openid) and private (user_openid).
+    allowed_users: frozenset[str] = field(default_factory=frozenset)
+
+    # Max papers shown per list (today / search). Indexable for 收藏/总结.
+    list_limit: int = 8
+
+    # Legacy WeChat/iLink token cache (only used by the ilink.py transport).
     token_file: Path = field(
         default_factory=lambda: Path(
             os.environ.get(
@@ -45,29 +56,24 @@ class BotConfig:
         ).expanduser()
     )
 
-    # Optional whitelist of WeChat user ids allowed to use the bot. Empty means
-    # everyone who can message the linked account. Comma-separated env var.
-    allowed_users: frozenset[str] = field(default_factory=frozenset)
-
-    # Max papers shown per list (today / search). Indexable for 收藏/总结.
-    list_limit: int = 8
-
     @classmethod
     def from_env(cls) -> "BotConfig":
         """Build configuration from environment variables."""
-        allowed_raw = os.environ.get("ILINK_ALLOWED_USERS", "")
+        allowed_raw = os.environ.get("QQ_BOT_ALLOWED_USERS", "")
         allowed = frozenset(u.strip() for u in allowed_raw.split(",") if u.strip())
 
         list_limit = int(os.environ.get("ZOTWATCH_BOT_LIST_LIMIT", "8"))
 
         return cls(
             base_dir=_default_base_dir(),
+            appid=os.environ.get("QQ_BOT_APPID", ""),
+            secret=os.environ.get("QQ_BOT_SECRET", ""),
             allowed_users=allowed,
             list_limit=list_limit,
         )
 
     def is_allowed(self, user_id: str) -> bool:
-        """Whether a given WeChat user id may use the bot."""
+        """Whether a given QQ user openid may use the bot."""
         if not self.allowed_users:
             return True
         return user_id in self.allowed_users
