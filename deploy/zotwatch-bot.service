@@ -1,0 +1,32 @@
+# systemd unit for the ZotWatch WeChat bot.
+#
+# Install:
+#   1. Edit User=, WorkingDirectory= and ExecStart= below (or run deploy/setup.sh,
+#      which fills them in and installs this file for you).
+#   2. sudo cp deploy/zotwatch-bot.service /etc/systemd/system/
+#   3. sudo systemctl daemon-reload && sudo systemctl enable --now zotwatch-bot
+#   4. journalctl -u zotwatch-bot -f
+#
+# NOTE: scan the login QR once with `uv run zotwatch-bot` on a terminal BEFORE
+# enabling the service, so the token is already cached. A headless service can
+# only print the QR to the logs.
+
+[Unit]
+Description=ZotWatch WeChat (iLink) bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+# uv reads the project's .env-less environment; the bot loads its own .env from
+# WorkingDirectory at startup.
+ExecStart=__UV__ run zotwatch-bot
+Restart=always
+RestartSec=10
+# Give a slow `抓取` (full pipeline) room before systemd considers it hung.
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -42,6 +42,13 @@ _CLIENT_VERSION_INT = str((2 << 16) | (4 << 8) | 3)  # encodes 2.4.3
 # How long the server holds a long-poll before returning empty (seconds).
 LONG_POLL_TIMEOUT = 40
 
+# HTTP statuses that mean the bot token is no longer valid.
+_AUTH_FAIL_STATUSES = {401, 403}
+
+
+class ILinkAuthError(Exception):
+    """The iLink bot token was rejected (expired/invalid); re-login needed."""
+
 
 @dataclass
 class InboundMessage:
@@ -112,17 +119,28 @@ class ILinkClient:
         base = (self.session.baseurl if self.session else BASE_URL).rstrip("/")
         return f"{base}/{path.lstrip('/')}"
 
+    def _handle(self, resp: requests.Response) -> dict:
+        """Raise on auth failure, otherwise return the JSON body."""
+        if resp.status_code in _AUTH_FAIL_STATUSES:
+            raise ILinkAuthError(f"iLink rejected the token (HTTP {resp.status_code})")
+        resp.raise_for_status()
+        data = resp.json()
+        # A nonzero `ret` is the API-level error channel; surface it for
+        # diagnosis but only treat it as fatal-auth when clearly so.
+        ret = data.get("ret")
+        if ret not in (None, 0):
+            logger.warning("iLink %s returned ret=%s: %s", resp.url, ret, data.get("err_msg", ""))
+        return data
+
     def _post(self, path: str, body: dict, *, timeout: float) -> dict:
         resp = self._http.post(
             self._url(path), headers=self._headers(), json=body, timeout=timeout
         )
-        resp.raise_for_status()
-        return resp.json()
+        return self._handle(resp)
 
     def _get(self, path: str, *, timeout: float) -> dict:
         resp = self._http.get(self._url(path), headers=self._headers(), timeout=timeout)
-        resp.raise_for_status()
-        return resp.json()
+        return self._handle(resp)
 
     def ensure_login(self) -> None:
         """Load a cached session, or run the QR login flow and cache it."""
@@ -136,6 +154,22 @@ class ILinkClient:
                 return
             except (json.JSONDecodeError, KeyError, OSError) as exc:
                 logger.warning("Cached session unusable (%s); re-running QR login", exc)
+        self._qr_login()
+
+    def relogin(self) -> None:
+        """Discard the current (rejected) session and run QR login again.
+
+        Used when the token expires while the bot is running. On a headless
+        host the QR is printed to the logs; the raw payload is also logged so it
+        can be regenerated, or you can re-run ``zotwatch-bot`` on a TTY once.
+        """
+        logger.warning("iLink token rejected; clearing session and re-authenticating")
+        self.session = None
+        try:
+            self.token_file.unlink(missing_ok=True)
+        except OSError as exc:
+            logger.warning("Could not remove stale token file %s: %s", self.token_file, exc)
+        self._cursor = ""
         self._qr_login()
 
     def _save_session(self) -> None:
@@ -275,4 +309,4 @@ def _render_qr(data: str) -> None:
     print(f"\niLink QR payload: {data}")
 
 
-__all__ = ["ILinkClient", "InboundMessage", "BASE_URL"]
+__all__ = ["ILinkClient", "InboundMessage", "ILinkAuthError", "BASE_URL"]

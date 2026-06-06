@@ -16,10 +16,15 @@ from dotenv import load_dotenv
 
 from .actions import Actions
 from .config import BotConfig
-from .ilink import ILinkClient, InboundMessage
+from .ilink import ILinkAuthError, ILinkClient, InboundMessage
 from .router import Reply, Router
 
 logger = logging.getLogger(__name__)
+
+# After this many consecutive failed polls, shout — on an overseas VPS a
+# persistent failure most likely means WeChat risk control is rejecting the
+# cross-border connection (see README).
+_NOISY_FAILURE_THRESHOLD = 5
 
 
 def _setup_logging() -> None:
@@ -60,14 +65,36 @@ def serve(config: BotConfig | None = None) -> None:
 
     executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="zotwatch-bot")
     backoff = 1.0
+    consecutive_failures = 0
 
     try:
         while True:
             try:
                 messages = client.poll()
                 backoff = 1.0  # reset after a successful poll
+                consecutive_failures = 0
+            except ILinkAuthError as exc:
+                # Token expired/rejected mid-run: re-authenticate and resume.
+                logger.warning("Auth error (%s); re-logging in", exc)
+                try:
+                    client.relogin()
+                except Exception:  # noqa: BLE001 - keep the loop alive
+                    logger.exception("Re-login failed; retrying in %.0fs", backoff)
+                    time.sleep(backoff)
+                    backoff = min(backoff * 2, 60)
+                continue
             except (requests.RequestException, ValueError) as exc:
-                logger.warning("Poll failed (%s); retrying in %.0fs", exc, backoff)
+                consecutive_failures += 1
+                if consecutive_failures >= _NOISY_FAILURE_THRESHOLD:
+                    logger.error(
+                        "Poll has failed %d times in a row (%s). If this VPS is "
+                        "outside China, WeChat risk control may be rejecting the "
+                        "connection to ilinkai.weixin.qq.com — see README.",
+                        consecutive_failures,
+                        exc,
+                    )
+                else:
+                    logger.warning("Poll failed (%s); retrying in %.0fs", exc, backoff)
                 time.sleep(backoff)
                 backoff = min(backoff * 2, 60)
                 continue
@@ -97,6 +124,9 @@ def serve(config: BotConfig | None = None) -> None:
 def main() -> None:
     """Console-script entry point."""
     _setup_logging()
+    # Load the bot's own .env (ZOTWATCH_DIR, ILINK_* …) from the working dir
+    # before reading any of those variables.
+    load_dotenv()
     serve()
 
 

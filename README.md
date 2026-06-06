@@ -85,15 +85,56 @@ from the ZotWatch project's `.env`.
 
 ## Deployment (Phase 2)
 
-The footprint is just Python + the iLink connection, so a tiny VPS is enough.
-The VPS needs the ZotWatch `data/` artifacts and API keys. You can either run
-the ZotWatch pipeline on the VPS, or sync the artifacts produced by the daily
-GitHub Actions run.
+The footprint is just Python + the iLink connection, so a tiny VPS (1–2 GB RAM)
+is enough. The VPS needs the ZotWatch `data/` artifacts and API keys.
+
+A bootstrap script and a systemd unit live in [`deploy/`](deploy/):
+
+```bash
+cd zotwatch-mcp
+bash deploy/setup.sh          # uv sync, prepare .env, optionally install systemd
+uv run zotwatch-bot           # run once to scan the login QR (caches the token)
+sudo systemctl enable --now zotwatch-bot
+journalctl -u zotwatch-bot -f
+```
+
+### Keep it light: disable the scraper on the VPS
+
+ZotWatch's abstract-enrichment scraper uses `camoufox` (a headless Firefox). The
+bot never imports it at startup — it is only launched if the scraper runs during
+`抓取`. To keep the VPS small, set this in the ZotWatch `config/config.yaml`:
+
+```yaml
+sources:
+  scraper:
+    enabled: false
+```
+
+Then the camoufox browser binary is never needed and `抓取` simply skips
+enrichment.
+
+### Data
+
+The bot reuses an existing ZotWatch install's artifacts. The cheapest path is to
+build the profile on your working machine and copy `data/` over once
+(`rsync -av ~/AIZotWatch/data/ vps:<ZOTWATCH_DIR>/data/`); `抓取` then only does
+incremental updates and reuses the embedding cache. Alternatively build it on the
+VPS with `uv run zotwatch profile --full`.
+
+### Token expiry / re-login
+
+The login token is cached and reused. If iLink rejects it later (HTTP 401/403),
+the bot logs the failure and re-runs the QR login automatically. On a headless
+service the QR is printed to the logs (`journalctl`), along with the raw payload;
+the simplest recovery is to run `uv run zotwatch-bot` on a terminal once to
+re-scan.
 
 > **风控 caveat:** the relevant link is *outbound* (VPS → `ilinkai.weixin.qq.com`
 > long-poll). WeChat is globally reachable, but a cross-border IP (phone in CN,
-> bot overseas) may be rejected by WeChat risk control. This is only verifiable
-> once deployed; if it fails, host the bot on a CN-located machine.
+> **bot overseas**) may be rejected by WeChat risk control. If polling keeps
+> failing, the bot logs an explicit error pointing here after a few retries.
+> This is only verifiable once deployed; if it fails, host the bot on a
+> CN-located machine.
 
 ## Status
 
