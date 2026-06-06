@@ -1,0 +1,34 @@
+[project]
+name = "zotwatch-bot"
+version = "0.1.0"
+description = "Lightweight WeChat (iLink) bot that drives ZotWatch interactively"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.13"
+dependencies = [
+    # The bot is a thin wrapper over the zotwatch package: it reuses zotwatch's
+    # pipeline, storage, embedding and LLM clients directly (no reimplementation).
+    "zotwatch @ git+https://github.com/CrazyHalfDay/AIZotWatch.git",
+    "requests>=2.31",
+    "python-dotenv>=1.0",
+    "numpy>=1.24",
+    # Optional, only used to render the login QR code in the terminal.
+    "qrcode>=7.4",
+]
+
+[project.scripts]
+zotwatch-bot = "zotwatch_bot.main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zotwatch_bot"]
+
+[tool.hatch.metadata]
+# Allow the direct git reference for the zotwatch dependency.
+allow-direct-references = true
+
+[tool.ruff]
+line-length = 120

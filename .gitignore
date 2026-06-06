@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Env / secrets
+.env
+*.env
+!examples/.env.example
+
+# iLink session token cache
+ilink_token.json
+.zotwatch_bot/
+
+# Tooling
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+uv.lock
