@@ -123,26 +123,19 @@ var ZWPrefs = {
 
   // ── actions ────────────────────────────────────────────────────────────
 
+  _on(id, fn) {
+    const el = this.$(id);
+    if (el) el.addEventListener("command", fn);
+  },
+
   bindActions() {
-    this.$("zw-test-embedding").addEventListener("command", () =>
-      this.testEmbedding()
-    );
-    this.$("zw-test-llm").addEventListener("command", () => this.testLLM());
-    this.$("zw-journal-search-btn").addEventListener("command", () =>
-      this.searchJournals()
-    );
-    this.$("zw-import-whitelist").addEventListener("command", () =>
-      this.importWhitelist()
-    );
-    this.$("zw-profile-incremental").addEventListener("command", () =>
-      this.runMaintenance("incremental")
-    );
-    this.$("zw-profile-rebuild").addEventListener("command", () =>
-      this.runMaintenance("rebuild")
-    );
-    this.$("zw-clear-cache").addEventListener("command", () =>
-      this.clearCache()
-    );
+    this._on("zw-test-embedding", () => this.testEmbedding());
+    this._on("zw-test-llm", () => this.testLLM());
+    this._on("zw-journal-search-btn", () => this.searchJournals());
+    this._on("zw-import-whitelist", () => this.importWhitelist());
+    this._on("zw-profile-incremental", () => this.runMaintenance("incremental"));
+    this._on("zw-profile-rebuild", () => this.runMaintenance("rebuild"));
+    this._on("zw-clear-cache", () => this.clearCache());
   },
 
   async _http(method, url, headers, body) {
@@ -339,23 +332,23 @@ var ZWPrefs = {
     const core = this._core();
     const pStatus = this.$("zw-profile-status");
     const cStatus = this.$("zw-cache-status");
+    if (!pStatus) return;
     if (core && core.storage && core.storage.stats) {
       try {
         const s = await core.storage.stats();
         pStatus.textContent = `已向量化 ${s.embedded}/${s.total} 条 · 上次更新 ${s.updatedAt || "—"}`;
-        cStatus.textContent = `缓存:向量 ${s.vectorSize || "—"} · 摘要 ${s.summarySize || "—"}`;
+        if (cStatus) cStatus.textContent = `缓存:向量 ${s.vectorSize || "—"} · 摘要 ${s.summarySize || "—"}`;
         return;
       } catch (e) {
         /* fall through */
       }
     }
     pStatus.textContent = "画像状态:核心模块未加载";
-    cStatus.textContent = "";
+    if (cStatus) cStatus.textContent = "";
   },
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => ZWPrefs.init());
-} else {
-  ZWPrefs.init();
-}
+// Init is triggered by the pane root's onload (see preferences.xhtml). Do NOT
+// run at top level: Zotero injects the pane DOM lazily, so elements aren't in
+// the document when this script first executes.
+globalThis.ZWPrefs = ZWPrefs;
