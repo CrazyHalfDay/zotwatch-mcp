@@ -1,0 +1,41 @@
+/* ZotWatch preferences pane — minimal layout. Iterate as needed. */
+
+.zw-prefs groupbox {
+  margin: 8px 0;
+  padding: 6px 8px;
+}
+
+.zw-prefs .zw-title h2 {
+  margin: 0 0 6px 0;
+  font-size: 1.05em;
+}
+
+.zw-prefs .zw-field {
+  min-width: 96px;
+}
+
+.zw-prefs .zw-input {
+  flex: 1;
+  min-width: 220px;
+}
+
+.zw-prefs .zw-num {
+  width: 64px;
+  margin: 0 6px;
+}
+
+.zw-prefs .zw-result,
+.zw-prefs .zw-hint {
+  margin: 4px 0 0 96px;
+  opacity: 0.85;
+}
+
+.zw-prefs .zw-results,
+.zw-prefs .zw-list {
+  margin: 4px 0;
+  max-height: 160px;
+  overflow-y: auto;
+  border: 1px solid var(--fill-quinary, #ddd);
+  border-radius: 4px;
+  padding: 4px;
+}

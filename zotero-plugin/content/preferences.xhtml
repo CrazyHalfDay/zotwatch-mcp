@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ZotWatch preferences pane.
+  Registered from bootstrap.js via Zotero.PreferencePanes.register (see SETTINGS.md).
+  Labels come from locale/<locale>/preferences.ftl (data-l10n-id).
+  All values are loaded/saved manually in preferences.js (no `preference=` binding),
+  so behavior is the same across Zotero 7.x point releases.
+-->
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml"
+      class="zw-prefs">
+
+  <!-- Fluent resource. The "zotwatch/" namespace is registered from bootstrap.js
+       (see SETTINGS.md). If labels show as raw ids, this registration is the
+       first thing to check. -->
+  <linkset>
+    <html:link rel="localization" href="zotwatch/preferences.ftl"/>
+  </linkset>
+
+  <!-- ① Embedding service ─────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-embedding"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-embedding-provider"/>
+      <menulist id="zw-embeddingProvider">
+        <menupopup>
+          <menuitem value="voyage" label="Voyage"/>
+          <menuitem value="dashscope" label="DashScope"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-embedding-model"/>
+      <html:input id="zw-embeddingModel" type="text" class="zw-input"/>
+    </hbox>
+
+    <hbox align="center" id="zw-row-voyageKey">
+      <label class="zw-field" data-l10n-id="zw-voyage-key"/>
+      <html:input id="zw-voyageApiKey" type="password" class="zw-input"/>
+      <button id="zw-test-embedding" data-l10n-id="zw-test"/>
+    </hbox>
+
+    <hbox align="center" id="zw-row-dashscopeKey" hidden="true">
+      <label class="zw-field" data-l10n-id="zw-dashscope-key"/>
+      <html:input id="zw-dashscopeApiKey" type="password" class="zw-input"/>
+    </hbox>
+
+    <description id="zw-test-embedding-result" class="zw-result"/>
+  </groupbox>
+
+  <!-- ② LLM service ───────────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-llm"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-llm-provider"/>
+      <menulist id="zw-llmProvider">
+        <menupopup>
+          <menuitem value="deepseek" label="DeepSeek"/>
+          <menuitem value="openrouter" label="OpenRouter"/>
+          <menuitem value="kimi" label="Kimi"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-llm-model"/>
+      <html:input id="zw-llmModel" type="text" class="zw-input"/>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-llm-key"/>
+      <html:input id="zw-llmApiKey" type="password" class="zw-input"/>
+      <button id="zw-test-llm" data-l10n-id="zw-test"/>
+    </hbox>
+
+    <description id="zw-test-llm-result" class="zw-result"/>
+    <description class="zw-hint" data-l10n-id="zw-no-zotero-key"/>
+  </groupbox>
+
+  <!-- ③ Followed journals ─────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-journals"/></label>
+
+    <hbox align="center">
+      <html:input id="zw-journal-search" type="text" class="zw-input"
+                  data-l10n-attrs="placeholder" data-l10n-id="zw-journal-search"/>
+      <button id="zw-journal-search-btn" data-l10n-id="zw-search"/>
+    </hbox>
+    <vbox id="zw-journal-results" class="zw-results"/>
+
+    <separator/>
+    <label class="zw-field" data-l10n-id="zw-journal-followed"/>
+    <vbox id="zw-journal-list" class="zw-list"/>
+  </groupbox>
+
+  <!-- ④ Fetch ─────────────────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-fetch"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-recent-days"/>
+      <html:input id="zw-recentDays" type="number" min="1" max="180" class="zw-num"/>
+    </hbox>
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-sources"/>
+      <checkbox id="zw-source-journals" disabled="true" checked="true"
+                data-l10n-id="zw-source-journals"/>
+      <checkbox id="zw-sourceArxiv" data-l10n-id="zw-source-arxiv"/>
+    </hbox>
+    <checkbox id="zw-requireAbstract" data-l10n-id="zw-require-abstract"/>
+    <checkbox id="zw-dailyCache" data-l10n-id="zw-daily-cache"/>
+  </groupbox>
+
+  <!-- ⑤ Ranking ───────────────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-ranking"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-sim-method"/>
+      <menulist id="zw-simMethod">
+        <menupopup>
+          <menuitem value="knn" data-l10n-id="zw-sim-knn"/>
+          <menuitem value="centroid" data-l10n-id="zw-sim-centroid"/>
+        </menupopup>
+      </menulist>
+      <label class="zw-field" value="k ="/>
+      <html:input id="zw-knnK" type="number" min="1" max="50" class="zw-num"/>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-weights"/>
+      <label value="sim"/><html:input id="zw-wSimilarity" type="number" step="0.1" min="0" max="1" class="zw-num"/>
+      <label value="recency"/><html:input id="zw-wRecency" type="number" step="0.1" min="0" max="1" class="zw-num"/>
+      <label value="impact"/><html:input id="zw-wImpact" type="number" step="0.1" min="0" max="1" class="zw-num"/>
+      <label class="zw-field" data-l10n-id="zw-halflife"/>
+      <html:input id="zw-recencyHalflife" type="number" min="1" class="zw-num"/>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-threshold-mode"/>
+      <menulist id="zw-thresholdMode">
+        <menupopup>
+          <menuitem value="fixed" data-l10n-id="zw-threshold-fixed"/>
+          <menuitem value="dynamic" data-l10n-id="zw-threshold-dynamic"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center" id="zw-row-thresholds">
+      <label value="must_read ≥"/>
+      <html:input id="zw-mustReadThreshold" type="number" step="0.05" min="0" max="1" class="zw-num"/>
+      <label value="consider ≥"/>
+      <html:input id="zw-considerThreshold" type="number" step="0.05" min="0" max="1" class="zw-num"/>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-journal-whitelist"/>
+      <button id="zw-import-whitelist" data-l10n-id="zw-import-csv"/>
+      <description id="zw-whitelist-status" class="zw-hint"/>
+    </hbox>
+  </groupbox>
+
+  <!-- ⑥ Summary & translation ─────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-summary"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-auto-summary"/>
+      <menulist id="zw-autoSummary">
+        <menupopup>
+          <menuitem value="off" data-l10n-id="zw-summary-off"/>
+          <menuitem value="ondemand" data-l10n-id="zw-summary-ondemand"/>
+          <menuitem value="all" data-l10n-id="zw-summary-all"/>
+        </menupopup>
+      </menulist>
+      <label class="zw-field" data-l10n-id="zw-summary-lang"/>
+      <menulist id="zw-summaryLang">
+        <menupopup>
+          <menuitem value="zh" label="中文"/>
+          <menuitem value="en" label="English"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-translate-provider"/>
+      <menulist id="zw-translateProvider">
+        <menupopup>
+          <menuitem value="google" label="Google"/>
+        </menupopup>
+      </menulist>
+      <label class="zw-field" data-l10n-id="zw-translate-target"/>
+      <menulist id="zw-translateTarget">
+        <menupopup>
+          <menuitem value="zh" label="中文"/>
+          <menuitem value="en" label="English"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+  </groupbox>
+
+  <!-- ⑦ UI & behavior ─────────────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-ui"/></label>
+
+    <hbox align="center">
+      <label class="zw-field" data-l10n-id="zw-list-limit"/>
+      <html:input id="zw-listLimit" type="number" min="1" max="100" class="zw-num"/>
+      <label class="zw-field" data-l10n-id="zw-ui-mode"/>
+      <menulist id="zw-uiMode">
+        <menupopup>
+          <menuitem value="badge" data-l10n-id="zw-ui-badge"/>
+          <menuitem value="tab" data-l10n-id="zw-ui-tab"/>
+          <menuitem value="both" data-l10n-id="zw-ui-both"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+    <hbox align="center">
+      <checkbox id="zw-autoRefresh" data-l10n-id="zw-auto-refresh"/>
+      <label class="zw-field" data-l10n-id="zw-ui-locale"/>
+      <menulist id="zw-uiLocale">
+        <menupopup>
+          <menuitem value="zh" label="中文"/>
+          <menuitem value="en" label="English"/>
+        </menupopup>
+      </menulist>
+    </hbox>
+  </groupbox>
+
+  <!-- ⑧ Profile / maintenance ─────────────────────────────────────────── -->
+  <groupbox>
+    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-maintenance"/></label>
+    <description id="zw-profile-status" class="zw-hint"/>
+    <hbox align="center">
+      <button id="zw-profile-incremental" data-l10n-id="zw-profile-incremental"/>
+      <button id="zw-profile-rebuild" data-l10n-id="zw-profile-rebuild"/>
+    </hbox>
+    <description id="zw-cache-status" class="zw-hint"/>
+    <hbox align="center">
+      <button id="zw-clear-cache" data-l10n-id="zw-clear-cache"/>
+    </hbox>
+  </groupbox>
+
+</vbox>

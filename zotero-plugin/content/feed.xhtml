@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+<?xml-stylesheet href="feed.css" type="text/css"?>
+<!--
+  ZotWatch recommendation feed. Opened as a dialog from the Tools menu
+  (bootstrap.js). Runs with the parent window's privileges; Zotero is reached
+  via window.opener.
+-->
+<window xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+        xmlns:html="http://www.w3.org/1999/xhtml"
+        title="ZotWatch 推荐"
+        width="920" height="720"
+        onload="ZWFeed.init()">
+
+  <script src="feed.js"/>
+
+  <vbox flex="1" class="zw-feed">
+    <hbox align="center" class="zw-feed-bar">
+      <button id="zw-refresh" label="刷新"/>
+      <description id="zw-status" flex="1"/>
+    </hbox>
+    <vbox id="zw-feed-list" flex="1" class="zw-feed-list"/>
+  </vbox>
+</window>

@@ -1,0 +1,28 @@
+/* ZotWatch feed dialog */
+
+.zw-feed { padding: 8px; }
+.zw-feed-bar { padding: 4px 2px 8px; }
+.zw-feed-list { overflow-y: auto; }
+
+.zw-card {
+  border: 1px solid var(--fill-quinary, #ddd);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin: 4px 2px;
+  border-left-width: 4px;
+}
+.zw-label-must_read { border-left-color: #d9534f; }
+.zw-label-consider { border-left-color: #f0ad4e; }
+.zw-label-ignore { border-left-color: #bbb; }
+
+.zw-card-title { font-weight: 600; margin-bottom: 2px; }
+.zw-card-meta { font-size: 0.85em; opacity: 0.8; margin-bottom: 4px; }
+.zw-card-btns { gap: 6px; }
+.zw-card-summary {
+  white-space: pre-wrap;
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: var(--fill-quinary, #f5f5f5);
+  border-radius: 4px;
+  font-size: 0.9em;
+}

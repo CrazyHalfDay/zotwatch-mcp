@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+  "name": "ZotWatch",
+  "version": "0.1.0",
+  "description": "在 Zotero 里按关注期刊抓取最新文章,并用你的文库做个性化相关度排序与 AI 摘要。",
+  "author": "ZotWatch",
+  "applications": {
+    "zotero": {
+      "id": "zotwatch@zotwatch.local",
+      "update_url": "https://example.com/zotwatch/updates.json",
+      "strict_min_version": "6.999",
+      "strict_max_version": "7.0.*"
+    }
+  }
+}
