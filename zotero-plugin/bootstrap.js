@@ -94,13 +94,17 @@ async function startup({ id, version, rootURI }) {
   // Zotero 8/9 auto-registers locale/<locale>/*.ftl by file name, so no manual
   // Fluent registration is needed.
 
-  Zotero.PreferencePanes.register({
-    pluginID: id,
-    src: rootURI + "content/preferences.xhtml",
-    scripts: [rootURI + "content/config.js", rootURI + "content/preferences.js"],
-    stylesheets: [rootURI + "content/preferences.css"],
-    label: "ZotWatch",
-  });
+  try {
+    await Zotero.PreferencePanes.register({
+      pluginID: id,
+      src: rootURI + "content/preferences.xhtml",
+      scripts: [rootURI + "content/config.js", rootURI + "content/preferences.js"],
+      stylesheets: [rootURI + "content/preferences.css"],
+      label: "ZotWatch",
+    });
+  } catch (e) {
+    log("PreferencePanes.register failed: " + e);
+  }
 
   // Menu: prefer the MenuManager API; fall back to manual DOM injection.
   if (!registerMenu(id)) {

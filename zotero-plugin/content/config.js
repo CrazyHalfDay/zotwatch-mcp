@@ -4,15 +4,19 @@
 // directly), mirroring ZotWatch's `Settings` object. Keys are the suffix after
 // the "extensions.zotwatch." branch (e.g. "recentDays").
 
-// Zotero 8/9 preference panes run in their own global scope. Resolve Zotero via
-// globalThis/window (avoid a self-referencing `var Zotero` which would hoist to
-// undefined and shadow the real global).
-var Zotero =
-  (typeof globalThis !== "undefined" && globalThis.Zotero) ||
-  (typeof window !== "undefined" && window.Zotero);
-
 var ZWConfig = {
   PREFIX: "extensions.zotwatch.",
+
+  // Resolve Zotero at call time. Zotero 8/9 preference panes run in their own
+  // global scope; do NOT declare a local `var Zotero` (it would hoist to
+  // undefined and shadow the real global, breaking the whole pane).
+  _Z() {
+    return (
+      (typeof Zotero !== "undefined" && Zotero) ||
+      (typeof window !== "undefined" && window.Zotero) ||
+      (typeof globalThis !== "undefined" && globalThis.Zotero)
+    );
+  },
 
   _full(key) {
     return this.PREFIX + key;
@@ -20,16 +24,16 @@ var ZWConfig = {
 
   /** Raw get. `true` => treat as a global (fully-qualified) pref key. */
   get(key, fallback = undefined) {
-    const v = Zotero.Prefs.get(this._full(key), true);
+    const v = this._Z().Prefs.get(this._full(key), true);
     return v === undefined || v === null ? fallback : v;
   },
 
   set(key, value) {
-    Zotero.Prefs.set(this._full(key), value, true);
+    this._Z().Prefs.set(this._full(key), value, true);
   },
 
   clear(key) {
-    Zotero.Prefs.clear(this._full(key), true);
+    this._Z().Prefs.clear(this._full(key), true);
   },
 
   getString(key, d = "") {
