@@ -1,7 +1,7 @@
 # ZotWatch (Zotero 插件版)
 
 把 [ZotWatch](https://github.com/CrazyHalfDay/AIZotWatch) 的"个性化文献推荐"重做成一个
-**原生 Zotero 7 插件**:按你关注的期刊抓取最新文章(JournalLens 思路),用**你的
+**原生 Zotero 插件(兼容 7 / 8 / 9)**:按你关注的期刊抓取最新文章(JournalLens 思路),用**你的
 Zotero 文库**做个性化相关度排序,并出 AI 摘要 —— 全程在 Zotero 窗口内,**无需服务器、
 无需 Python、无需任何部署**。
 

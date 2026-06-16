@@ -4,6 +4,13 @@
 // directly), mirroring ZotWatch's `Settings` object. Keys are the suffix after
 // the "extensions.zotwatch." branch (e.g. "recentDays").
 
+// Zotero 8/9 preference panes run in their own global scope. Resolve Zotero via
+// globalThis/window (avoid a self-referencing `var Zotero` which would hoist to
+// undefined and shadow the real global).
+var Zotero =
+  (typeof globalThis !== "undefined" && globalThis.Zotero) ||
+  (typeof window !== "undefined" && window.Zotero);
+
 var ZWConfig = {
   PREFIX: "extensions.zotwatch.",
 

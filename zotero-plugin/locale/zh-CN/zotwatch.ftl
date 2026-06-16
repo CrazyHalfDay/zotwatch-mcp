@@ -113,6 +113,10 @@ zw-profile-rebuild =
 zw-clear-cache =
     .label = 清空缓存
 
+# 菜单
+zw-menu-open =
+    .label = ZotWatch 推荐…
+
 # 通用按钮
 zw-test =
     .label = 测试连接

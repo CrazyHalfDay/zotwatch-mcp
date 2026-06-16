@@ -112,6 +112,10 @@ zw-profile-rebuild =
 zw-clear-cache =
     .label = Clear cache
 
+# Menu
+zw-menu-open =
+    .label = ZotWatch Feed…
+
 # Common buttons
 zw-test =
     .label = Test

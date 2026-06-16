@@ -1,8 +1,9 @@
-// ZotWatch — Zotero 7 bootstrap entry.
-// Loads the core modules onto Zotero.ZotWatch, registers the preferences pane
-// and Fluent locales, and adds a Tools-menu item that opens the feed dialog.
+// ZotWatch — Zotero 7/8/9 bootstrap entry.
+// Loads the core modules onto Zotero.ZotWatch, registers the preferences pane,
+// and adds a Tools-menu item that opens the feed dialog.
 
 var ZotWatch_rootURI;
+var ZotWatch_menuID = null; // returned by Zotero.MenuManager.registerMenu (8/9)
 
 // Core module files, loaded in dependency-safe order (cross-refs are lazy).
 const ZW_MODULES = [
@@ -23,39 +24,47 @@ function log(msg) {
   Zotero.debug("ZotWatch: " + msg);
 }
 
-function registerFluent(rootURI) {
-  // Best-effort Fluent registration. If this fails, the prefs pane still works
-  // but shows raw l10n ids (see SETTINGS.md for the fallback).
+function openFeed() {
+  const win = Zotero.getMainWindow();
+  if (!win) return;
+  win.openDialog(
+    ZotWatch_rootURI + "content/feed.xhtml",
+    "zotwatch-feed",
+    "chrome,resizable,centerscreen,width=920,height=720"
+  );
+}
+
+// Preferred path on Zotero 8/9: register a menu item once via MenuManager.
+function registerMenu(id) {
+  if (!Zotero.MenuManager || !Zotero.MenuManager.registerMenu) return false;
   try {
-    const { L10nFileSource, L10nRegistry } = ChromeUtils.importESModule(
-      "resource://gre/modules/L10nRegistry.sys.mjs"
-    );
-    const reg = L10nRegistry.getInstance();
-    const source = new L10nFileSource(
-      "zotwatch",
-      "app",
-      ["zh-CN", "en-US"],
-      rootURI + "locale/{locale}/"
-    );
-    reg.registerSources([source]);
+    ZotWatch_menuID = Zotero.MenuManager.registerMenu({
+      menuID: "zotwatch-tools",
+      pluginID: id,
+      target: "main/menubar/tools",
+      menus: [
+        {
+          menuType: "menuitem",
+          l10nID: "zw-menu-open",
+          onCommand: () => openFeed(),
+        },
+      ],
+    });
+    return true;
   } catch (e) {
-    log("Fluent registration failed: " + e);
+    log("MenuManager.registerMenu failed: " + e);
+    return false;
   }
 }
 
+// Fallback for older Zotero: inject a menuitem into each main window.
 function addToWindow(win) {
   const doc = win.document;
   if (doc.getElementById("zotwatch-menuitem")) return;
   const item = doc.createXULElement("menuitem");
   item.id = "zotwatch-menuitem";
   item.setAttribute("label", "ZotWatch 推荐…");
-  item.addEventListener("command", () => {
-    win.openDialog(
-      ZotWatch_rootURI + "content/feed.xhtml",
-      "zotwatch-feed",
-      "chrome,resizable,centerscreen,width=920,height=720"
-    );
-  });
+  item.addEventListener("command", () => openFeed());
   const toolsPopup = doc.getElementById("menu_ToolsPopup");
   if (toolsPopup) toolsPopup.appendChild(item);
 }
@@ -82,7 +91,8 @@ async function startup({ id, version, rootURI }) {
     Services.scriptloader.loadSubScript(rootURI + `content/${m}.js`);
   }
 
-  registerFluent(rootURI);
+  // Zotero 8/9 auto-registers locale/<locale>/*.ftl by file name, so no manual
+  // Fluent registration is needed.
 
   Zotero.PreferencePanes.register({
     pluginID: id,
@@ -92,12 +102,15 @@ async function startup({ id, version, rootURI }) {
     label: "ZotWatch",
   });
 
-  for (const win of Zotero.getMainWindows()) addToWindow(win);
+  // Menu: prefer the MenuManager API; fall back to manual DOM injection.
+  if (!registerMenu(id)) {
+    for (const win of Zotero.getMainWindows()) addToWindow(win);
+  }
   log("started v" + version);
 }
 
 function onMainWindowLoad({ window }) {
-  addToWindow(window);
+  if (!ZotWatch_menuID) addToWindow(window);
 }
 
 function onMainWindowUnload({ window }) {
@@ -105,6 +118,13 @@ function onMainWindowUnload({ window }) {
 }
 
 function shutdown() {
+  try {
+    if (ZotWatch_menuID && Zotero.MenuManager && Zotero.MenuManager.unregisterMenu) {
+      Zotero.MenuManager.unregisterMenu(ZotWatch_menuID);
+    }
+  } catch (e) {
+    /* ignore */
+  }
   for (const win of Zotero.getMainWindows()) removeFromWindow(win);
   if (typeof Zotero !== "undefined") Zotero.ZotWatch = undefined;
 }

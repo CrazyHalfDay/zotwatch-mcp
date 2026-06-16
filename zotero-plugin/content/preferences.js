@@ -50,6 +50,12 @@ var ZWPrefs = {
   },
 
   init() {
+    // Zotero 8/9: make sure the Fluent strings are injected into this pane.
+    try {
+      window.MozXULElement.insertFTLIfNeeded("zotwatch.ftl");
+    } catch (e) {
+      /* older Zotero registers via the <linkset> in the XHTML */
+    }
     this.loadAll();
     this.bindAll();
     this.bindActions();

@@ -10,11 +10,12 @@
       xmlns:html="http://www.w3.org/1999/xhtml"
       class="zw-prefs">
 
-  <!-- Fluent resource. The "zotwatch/" namespace is registered from bootstrap.js
-       (see SETTINGS.md). If labels show as raw ids, this registration is the
-       first thing to check. -->
+  <!-- Fluent resource. Zotero 8/9 auto-registers locale/<locale>/*.ftl by file
+       name, so this resolves "zotwatch.ftl". preferences.js also calls
+       insertFTLIfNeeded as a belt-and-suspenders. If labels show as raw ids,
+       this is the first thing to check (see SETTINGS.md). -->
   <linkset>
-    <html:link rel="localization" href="zotwatch/preferences.ftl"/>
+    <html:link rel="localization" href="zotwatch.ftl"/>
   </linkset>
 
   <!-- ① Embedding service ─────────────────────────────────────────────── -->
