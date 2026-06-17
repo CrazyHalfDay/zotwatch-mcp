@@ -8,8 +8,7 @@
 -->
 <vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
       xmlns:html="http://www.w3.org/1999/xhtml"
-      class="zw-prefs"
-      onload="ZWPrefs.init()">
+      class="zw-prefs">
 
   <!-- Fluent resource. Zotero 8/9 auto-registers locale/<locale>/*.ftl by file
        name, so this resolves "zotwatch.ftl". preferences.js also calls
@@ -21,7 +20,7 @@
 
   <!-- ① Embedding service ─────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-embedding"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-embedding"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-embedding-provider"/>
@@ -54,7 +53,7 @@
 
   <!-- ② LLM service ───────────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-llm"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-llm"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-llm-provider"/>
@@ -84,7 +83,7 @@
 
   <!-- ③ Followed journals ─────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-journals"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-journals"/>
 
     <hbox align="center">
       <html:input id="zw-journal-search" type="text" class="zw-input"
@@ -100,7 +99,7 @@
 
   <!-- ④ Fetch ─────────────────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-fetch"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-fetch"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-recent-days"/>
@@ -118,7 +117,7 @@
 
   <!-- ⑤ Ranking ───────────────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-ranking"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-ranking"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-sim-method"/>
@@ -166,7 +165,7 @@
 
   <!-- ⑥ Summary & translation ─────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-summary"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-summary"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-auto-summary"/>
@@ -205,7 +204,7 @@
 
   <!-- ⑦ UI & behavior ─────────────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-ui"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-ui"/>
 
     <hbox align="center">
       <label class="zw-field" data-l10n-id="zw-list-limit"/>
@@ -233,7 +232,7 @@
 
   <!-- ⑧ Profile / maintenance ─────────────────────────────────────────── -->
   <groupbox>
-    <label class="zw-title"><html:h2 data-l10n-id="zw-sec-maintenance"/></label>
+    <html:h2 class="zw-title" data-l10n-id="zw-sec-maintenance"/>
     <description id="zw-profile-status" class="zw-hint"/>
     <hbox align="center">
       <button id="zw-profile-incremental" data-l10n-id="zw-profile-incremental"/>

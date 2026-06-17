@@ -50,18 +50,27 @@ var ZWPrefs = {
   },
 
   init() {
+    if (this._inited) return;
+    this._inited = true;
     // Zotero 8/9: make sure the Fluent strings are injected into this pane.
     try {
       window.MozXULElement.insertFTLIfNeeded("zotwatch.ftl");
     } catch (e) {
       /* older Zotero registers via the <linkset> in the XHTML */
     }
-    this.loadAll();
-    this.bindAll();
-    this.bindActions();
-    this.applyConditionalVisibility();
-    this.renderJournalList();
-    this.refreshStatus();
+    // Never let one failing step blank the whole pane.
+    try {
+      this.loadAll();
+    } catch (e) {}
+    try {
+      this.bindAll();
+      this.bindActions();
+    } catch (e) {}
+    try {
+      this.applyConditionalVisibility();
+      this.renderJournalList();
+      this.refreshStatus();
+    } catch (e) {}
   },
 
   // ── load / save ────────────────────────────────────────────────────────
@@ -348,7 +357,21 @@ var ZWPrefs = {
   },
 };
 
-// Init is triggered by the pane root's onload (see preferences.xhtml). Do NOT
-// run at top level: Zotero injects the pane DOM lazily, so elements aren't in
-// the document when this script first executes.
 globalThis.ZWPrefs = ZWPrefs;
+
+// Zotero injects the pane DOM lazily and the lifecycle event that fires differs
+// across 7/8/9, so don't rely on onload. Poll for a sentinel element, then init
+// once (init() is idempotent).
+(function scheduleInit(attempt) {
+  try {
+    if (typeof document !== "undefined" && document.getElementById("zw-embeddingProvider")) {
+      ZWPrefs.init();
+      return;
+    }
+  } catch (e) {
+    /* keep polling */
+  }
+  if (attempt < 200) {
+    setTimeout(() => scheduleInit(attempt + 1), 50);
+  }
+})(0);
